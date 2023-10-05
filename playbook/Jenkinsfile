@@ -1,21 +1,27 @@
 pipeline {
     agent any
     
+    environment {
+        // Se definen las variables de entorno para la dirección IP y las rutas de los archivos
+        EC2_IP = 'ec2-34-219-111-77.us-west-2.compute.amazonaws.com'
+        INVENTORY_PATH = '/tmp/inventory'
+        PLAYBOOK_PATH = '/tmp/playbook'
+    }
     stages {
         stage('Ansible-Playbook Execution') {
             steps {
                 script {
                     try {
-                        // Copia los archivos de inventario y playbooks de aws-ansible a la instancia EC2
+                        // Se copian los archivos de inventario y playbooks de aws-ansible a la instancia EC2
                         sshagent(credentials: ['ec2-user']) {
                             sh "echo 'Copying files to remote server'"
-                            sh "scp -o StrictHostKeyChecking=no -r inventory playbook ec2-user@ec2-34-219-111-77.us-west-2.compute.amazonaws.com:/tmp/"
+                            sh "scp -o StrictHostKeyChecking=no -r ${INVENTORY_PATH} ${PLAYBOOK_PATH} ec2-user@${EC2_IP}:/tmp/"
                             sh "echo 'Files copied successfully'"
                         }
                         
-                        // Ejecuta el playbook de Ansible en la instancia EC2
+                        // Se ejecuta el playbook de Ansible en la instancia EC2
                         sshagent(credentials: ['ec2-user']) {
-                            sh "ssh -o StrictHostKeyChecking=no ec2-user@ec2-34-219-111-77.us-west-2.compute.amazonaws.com 'cd /tmp/playbook && ansible-playbook -i /tmp/inventory/inventory.yml nginx_install.yml'"
+                            sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_IP} 'cd ${PLAYBOOK_PATH} && ansible-playbook -i ${INVENTORY_PATH}/inventory.yml nginx_install.yml'"
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'

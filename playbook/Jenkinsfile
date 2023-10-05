@@ -7,14 +7,14 @@ pipeline {
                 script {
                     try {
                         // Copia los archivos de inventario y playbooks de aws-ansible a la instancia EC2
-                        sshagent(credentials: ['SSH_key_pem']) {
+                        sshagent(credentials: ['SSH_credentials']) {
                             sh "echo 'Copying files to remote server'"
                             sh "scp -o StrictHostKeyChecking=no -r inventory playbook ec2-user@ec2-34-219-53-90.us-west-2.compute.amazonaws.com:/tmp/"
                             sh "echo 'Files copied successfully'"
                         }
                         
                         // Ejecuta el playbook de Ansible en la instancia EC2
-                        sshagent(credentials: ['SSH_key_pem']) {
+                        sshagent(credentials: ['SSH_credentials']) {
                             sh "ssh -o StrictHostKeyChecking=no ec2-user@ec2-34-219-53-90.us-west-2.compute.amazonaws.com 'cd /tmp/playbook && ansible-playbook -i /tmp/inventory/inventory.yml nginx_install.yml'"
                         }
                     } catch (Exception e) {
